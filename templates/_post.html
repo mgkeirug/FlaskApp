@@ -1,0 +1,74 @@
+<style>
+table {
+    font-family: arial, sans-serif;
+    border-collapse: collapse;
+    width: 100%;
+}
+
+td, th {
+    border: 1px solid #dddddd;
+    text-align: left;
+    padding: 8px;
+}
+
+tr:nth-child(even) {
+    background-color: #dddddd;
+}
+</style>
+
+<div class='static_stats'>
+
+    <table>
+	  <tr>
+	    <th>Height(in)</th>
+	    <th>Starting Weight</th>
+	    <th>Goal Weight</th>
+	    <th>Starting BF%</th>
+	    <th>Goal BF%</th>
+	    <th>Starting LBM</th>
+	    <th>Goal LBM</th>
+	  </tr>
+
+	  <tr>
+	    <td>{{ user.height }}</td>
+	    <td>{{ user.starting_weight }}</td>
+	    <td>{{ user.goal_weight }}</td>
+	    <td>{{ user.starting_bf_percentage }}</td>
+	    <td>{{ user.goal_bf_percentage }}</td>
+	    <td>{{ user.starting_lean_bodymass }}</td>
+	    <td>{{ user.goal_lean_bodymass }}</td>
+	  </tr>
+	
+    </table>
+</div>
+
+<div class='stats_table'>
+
+    <table>
+	  <tr>
+	    <th>Date</th>
+	    <th>Weight</th>
+	    <th>BF%</th>
+	    <th>LBM</th>
+	    <th>Fat lbs</th>
+	    <th>BMI</th>
+	    <th></th>
+	  </tr>
+	{% for row in posts %}
+	  <tr>
+	    <td>{{ moment(row.timestamp).format('LLL') }}</td>
+	    <td>{{ row.current_weight }}</td>
+	    <td>{{ row.current_bf_percentage }}</td>
+	    <td>{{ row.current_lean_bodymass }}</td>
+	    <td>{{ row.current_fat_pounds }}</td>
+	    <td>{{ row.bmi }}</td>
+	<td><form action = "" method = "POST">
+	    <input name="entry_id" type="hidden" class="btn btn-primary btn-xs" value= "{{ row.id }}">
+            <button id ="w3-btn">delete</button>
+	    </form> </td>
+	  </tr>
+	{% endfor %}
+    </table>
+</div>
+
+

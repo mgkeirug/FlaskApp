@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block app_content %}
+<style>
+div.form {
+	display: inline-block;
+	vertical-align: top;
+}
+
+div.personal_stats {
+	display: inline-block;
+	vertical-align: top;
+}
+
+div.goal_stats {
+	display: inline-block;
+	vertical-align: top;
+}
+
+</style>
+
+<div class="form">
+    <h3>Enter Your Stats</h3>
+    <form action="" method="post">
+        {{ form.hidden_tag() }}
+        <p>
+            {{ form.name.label }}<br>
+            {{ form.name(size=8) }}
+        </p>
+         <p>
+            {{ form.height_feet.label }}<br>
+            {{ form.height_feet(size=1) }}ft
+            {{ form.height_inches(size=1) }}in
+	    {% for error in form.height_feet.errors %}
+	    <span style="color: red;">[{{ error }}]</span>
+	    {% endfor %}
+	    {% for error in form.height_inches.errors %}
+	    <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
+        </p>
+	<p>
+            {{ form.starting_weight.label }}<br>
+            {{ form.starting_weight(size=8) }}
+	    {% for error in form.starting_weight.errors %}
+            <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
+        </p>
+	<p>
+            {{ form.current_weight.label }}<br>
+            {{ form.current_weight(size=8) }}
+	    {% for error in form.current_weight.errors %}
+            <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
+        </p>
+	<p>
+            {{ form.goal_weight.label }}<br>
+            {{ form.goal_weight(size=8) }}
+	    {% for error in form.goal_weight.errors %}
+            <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
+        </p>
+	<p>
+            {{ form.starting_bf_percentage.label }}<br>
+            {{ form.starting_bf_percentage(size=8) }}
+	    {% for error in form.starting_bf_percentage.errors %}
+            <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
+        </p>
+	<p>
+            {{ form.current_bf_percentage.label }}<br>
+            {{ form.current_bf_percentage(size=8) }}
+	    {% for error in form.current_bf_percentage.errors %}
+            <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
+        </p>
+	<p>
+            {{ form.goal_bf_percentage.label }}<br>
+            {{ form.goal_bf_percentage(size=8) }}
+	    {% for error in form.goal_bf_percentage.errors %}
+            <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
+        </p>
+        <p>{{ form.submit() }}</p>
+    </form>
+</div>
+
+{% endblock %}

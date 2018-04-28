@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block app_content %}
+
+<style>
+div.form {
+	display: inline-block;
+	vertical-align: top;
+}
+
+div.personal_stats {
+	display: inline-block;
+	vertical-align: top;
+}
+
+div.goal_stats {
+	display: inline-block;
+	vertical-align: top;
+}
+
+</style>
+
+<div class="form">
+    <form action="" method="post">
+        {{ form.hidden_tag() }}
+        <p>
+            {{ form.name.label }}<br>
+            {{ form.name(size=8) }}
+        </p>
+	 <p>
+            {{ form.height_feet.label }}<br>
+            {{ form.height_feet(size=1) }}ft
+            {{ form.height_inches(size=1) }}in
+        </p>
+	<p>
+            {{ form.starting_weight.label }}<br>
+            {{ form.starting_weight(size=8) }}
+        </p>
+	<p>
+            {{ form.current_weight.label }}<br>
+            {{ form.current_weight(size=8) }}
+        </p>
+	<p>
+            {{ form.goal_weight.label }}<br>
+            {{ form.goal_weight(size=8) }}
+        </p>
+	<p>
+            {{ form.starting_bf_percentage.label }}<br>
+            {{ form.starting_bf_percentage(size=8) }}
+        </p>
+	<p>
+            {{ form.current_bf_percentage.label }}<br>
+            {{ form.current_bf_percentage(size=8) }}
+        </p>
+	<p>
+            {{ form.goal_bf_percentage.label }}<br>
+            {{ form.goal_bf_percentage(size=8) }}
+        </p>
+        <p>{{ form.submit() }}</p>
+    </form>
+</div>
+
+<div class="personal_stats">
+<h2>Your current stats:</h2>
+<p>
+Hello {{name}}!<br>
+<br>
+You are <b>{{height}}</b> inches tall.<br>
+You weigh <b>{{current_weight}}</b> lbs, but you used to weigh <b>{{starting_weight}}</b> lbs.<br> 
+Your total weight lost is: <b>{{total_weight_lost}}</b> lbs.<br>
+<br>
+Your starting body fat percentage was <b>{{starting_bf_percentage}}</b> %.<br>
+Your current body fat percentage is <b>{{current_bf_percentage}}</b> %.<br>
+<br>
+You currently have <b>{{current_fat_pounds}}</b> pounds of fat on you.<br>
+<br>
+Your starting lean mass was: <b>{{starting_lean_bodymass}}</b><br>
+Your current lean mass is: <b>{{current_lean_bodymass}}</b><br>
+That means the amount of fat you have lost is: <b>{{fat_lost}}</b><br>
+That means the amount of non-fat mass you have lost is: <b>{{nonfat_lost}}</b><br>
+Your bmi is <b>{{bmi}}</b>.<br>
+<br>
+</p>
+</div>
+
+<div class="goal_stats">
+<h2>Personal goals:</h2>
+<i>Based on the Goal weight and Body Fat % you entered</i>:<br>
+<i>If</i>:<br>
+Your goal weight is <b>{{goal_weight}}</b> lbs and<br>
+Your goal body fat percentage is <b>{{goal_bf_percentage}}</b> %.<br>
+<i>Then</i>:<br>
+Your goal is to have <b>{{goal_fat_pounds}}</b> lbs of fat on you.<br>
+You must lose <b>{{goal_fat_loss}}</b> lbs of fat to reach your goal!<br>
+Your goal lean mass is: <b>{{goal_lean_bodymass}}</b><br>
+<br>
+<br>
+<i>Just based on the Body Fat % you entered</i>:<br>
+<i>If</i>:<br>
+Your goal body fat percentage is <b>{{goal_bf_percentage}}</b> %<br>
+<i>Then</i>:<br>
+Your goal weight is <b>{{goal_weight_auto}}</b> lbs and<br>
+You must lose <b>{{goal_fat_loss_auto}}</b> lbs of fat to reach your goal!<br>
+(As long as your lean body mass stays the same)<br>
+</div>
+
+{% endblock %}
+
+
