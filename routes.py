@@ -50,6 +50,11 @@ def index():
     if goal_bf_percentage is None:
         goal_bf_percentage = 0
     total_weight_lost = starting_weight - current_weight
+    if total_weight_lost < 0:
+        total_weight_lost = 0
+    total_weight_gained = current_weight - starting_weight
+    if total_weight_gained < 0:
+        total_weight_gained = 0
     starting_fat_pounds = round((starting_weight * starting_bf_percentage) * .01, 2)
     current_fat_pounds = round((current_weight * current_bf_percentage) * .01, 2)
     goal_fat_pounds = round((goal_weight * goal_bf_percentage) * .01, 2)
@@ -94,8 +99,11 @@ def index():
         if goal_bf_percentage is None:
             goal_bf_percentage = 0'''
         total_weight_lost = starting_weight - current_weight
-        #if total_weight_lost < 0:              #not sure if i want this
-        #    total_weight_lost = 0
+        if total_weight_lost < 0:
+            total_weight_lost = 0
+        total_weight_gained = current_weight - starting_weight
+        if total_weight_gained < 0:
+            total_weight_gained = 0
         starting_fat_pounds = round((starting_weight * starting_bf_percentage) * .01, 2)
         current_fat_pounds = round((current_weight * current_bf_percentage) * .01, 2)  #i dont know why any of these need to be here but they do
         goal_fat_pounds = round((goal_weight * goal_bf_percentage) * .01, 2)
@@ -131,6 +139,10 @@ def index():
             current_user.total_weight_lost = current_user.starting_weight - current_user.current_weight
             if current_user.total_weight_lost < 0:
                 current_user.total_weight_lost = 0
+            current_user.total_weight_gained = current_user.current_weight - current_user.current_weight
+            if current_user.total_weight_gained < 0:
+                current_user.total_weight_gained = 0
+
             current_user.starting_fat_pounds = starting_fat_pounds      #dont think i need the starting or goal ones equations here, might be wrong tho..
             current_user.current_fat_pounds = round((current_user.current_weight * current_user.current_bf_percentage) * .01, 2)
             current_user.goal_fat_pounds = round((current_user.goal_weight * current_user.goal_bf_percentage) * .01, 2)
@@ -151,7 +163,8 @@ def index():
                         starting_weight=starting_weight, current_weight=current_user.current_weight,
                         goal_weight=goal_weight, starting_bf_percentage=starting_bf_percentage,
                         current_bf_percentage=current_user.current_bf_percentage, goal_bf_percentage=goal_bf_percentage,
-                        total_weight_lost=current_user.total_weight_lost, starting_fat_pounds=current_user.starting_fat_pounds,
+                        total_weight_lost=current_user.total_weight_lost, total_weight_gained=current_user.total_weight_gained,
+                        starting_fat_pounds=current_user.starting_fat_pounds,
                         current_fat_pounds=current_user.current_fat_pounds, goal_fat_pounds=current_user.goal_fat_pounds,
                         fat_lost=current_user.fat_lost, starting_lean_bodymass=starting_lean_bodymass,
                         current_lean_bodymass=current_user.current_lean_bodymass,
@@ -168,7 +181,8 @@ def index():
                                fat_lost=fat_lost, starting_lean_bodymass=starting_lean_bodymass,
                                current_lean_bodymass=current_lean_bodymass, goal_lean_bodymass=goal_lean_bodymass,
                                bmi=bmi, nonfat_lost=nonfat_lost, goal_fat_loss=goal_fat_loss,
-                               total_weight_lost=total_weight_lost, current_fat_pounds=current_fat_pounds,
+                               total_weight_lost=total_weight_lost, total_weight_gained=total_weight_gained,
+                               current_fat_pounds=current_fat_pounds,
                                goal_fat_pounds=goal_fat_pounds, goal_weight_auto=goal_weight_auto,
                                goal_fat_loss_auto=goal_fat_loss_auto, goal_muscle_gain=goal_muscle_gain)
     return render_template('index.html', title='Home', form=form, name=name, height=height,
@@ -178,6 +192,7 @@ def index():
                            starting_lean_bodymass=starting_lean_bodymass, current_lean_bodymass=current_lean_bodymass,
                            goal_lean_bodymass=goal_lean_bodymass, bmi=bmi, nonfat_lost=nonfat_lost,
                            goal_fat_loss=goal_fat_loss, total_weight_lost=total_weight_lost,
+                           total_weight_gained=total_weight_gained,
                            current_fat_pounds=current_fat_pounds, goal_fat_pounds=goal_fat_pounds,
                            goal_weight_auto=goal_weight_auto, goal_fat_loss_auto=goal_fat_loss_auto,
                            goal_muscle_gain=goal_muscle_gain)
