@@ -1,10 +1,9 @@
 from __future__ import division
-from flask import render_template, request, flash, redirect, url_for, abort
+from flask import render_template, request, flash, redirect, url_for, abort, session
 from FlaskApp import app, db
 from flask_login import current_user, login_user, logout_user
 from FlaskApp.models import User, Post
 from FlaskApp.forms import LoginForm, RegistrationForm, EditProfileForm, StatsForm, UpdateForm
-from werkzeug.urls import url_parse
 from flask_login import login_required
 from datetime import datetime
 from FlaskApp.forms import ResetPasswordRequestForm, ResetPasswordForm
@@ -14,6 +13,7 @@ from FlaskApp.email import send_password_reset_email
 @app.route('/')
 def redir():
     return redirect(url_for('index'))
+
 @app.route('/index', methods=['GET', 'POST'])
 def index():
     form = StatsForm()          #these variables hold the data inserted into the html form
@@ -27,13 +27,16 @@ def index():
     if height_inches is None:
         height_inches = 0
     height = (height_feet * 12) + height_inches
-    #height = form.height.data
     starting_weight = form.starting_weight.data
     current_weight = form.current_weight.data
     goal_weight = form.goal_weight.data
     starting_bf_percentage = form.starting_bf_percentage.data
     current_bf_percentage = form.current_bf_percentage.data
     goal_bf_percentage = form.goal_bf_percentage.data
+
+    if 'form_data' in session:
+        session['form_data'] = form.data
+
     #input_stats = [starting_weight, current_weight, goal_weight, starting_bf_percentage, current_bf_percentage, goal_bf_percentage]
     if height is None:
        height = 0
@@ -84,26 +87,14 @@ def index():
         goal_weight = current_user.goal_weight
         starting_bf_percentage = current_user.starting_bf_percentage
         goal_bf_percentage = current_user.goal_bf_percentage
-        '''if height is None:
-            height = 0
-        if starting_weight is None:             #still testing, dont think i need
-            starting_weight = 0
-        if current_weight is None:
-            current_weight = 0  #dont know about this
-        if goal_weight is None:
-            goal_weight = 0
-        if starting_bf_percentage is None:
-            starting_bf_percentage = 0 #dont know about this
-        if current_bf_percentage is None:
-            current_bf_percentage = 0
-        if goal_bf_percentage is None:
-            goal_bf_percentage = 0'''
+
         total_weight_lost = starting_weight - current_weight
         if total_weight_lost < 0:
             total_weight_lost = 0
         total_weight_gained = current_weight - starting_weight
         if total_weight_gained < 0:
             total_weight_gained = 0
+
         starting_fat_pounds = round((starting_weight * starting_bf_percentage) * .01, 2)
         current_fat_pounds = round((current_weight * current_bf_percentage) * .01, 2)  #i dont know why any of these need to be here but they do
         goal_fat_pounds = round((goal_weight * goal_bf_percentage) * .01, 2)
@@ -111,10 +102,12 @@ def index():
         starting_lean_bodymass = round(starting_weight - starting_fat_pounds, 2)
         current_lean_bodymass = round(current_weight - current_fat_pounds, 2)
         goal_lean_bodymass = round(goal_weight - goal_fat_pounds, 2)
+
         try:
             bmi = round((current_weight / height / height) * 703, 2)
         except ZeroDivisionError:
             bmi = 0
+
         nonfat_lost = round((starting_lean_bodymass - current_lean_bodymass), 2)
         goal_fat_loss = round((current_fat_pounds - goal_fat_pounds), 2)
         goal_weight_auto = round((current_lean_bodymass / ((100 - goal_bf_percentage) * .01)), 2)
@@ -123,12 +116,14 @@ def index():
         if form.validate_on_submit():   #this will update the user profile(thats why current_user.height etc does) db AND add a user post the the post db if someone is logged in
             current_user.username = username
             current_user.id = user_id        #these need to be here to update the "user database", thats wwhat 'current_user.' does, without 'current_user.' is will only update the Post db
+
             current_user.current_weight = form.current_weight.data
             if current_user.current_weight is None:
                 current_user.current_weight = current_weight
             current_user.current_bf_percentage = form.current_bf_percentage.data
             if current_user.current_bf_percentage is None:
                 current_user.current_bf_percentage = current_bf_percentage
+
             current_user.name = name
             current_user.height = height
             current_user.starting_weight = starting_weight
@@ -150,46 +145,63 @@ def index():
             current_user.starting_lean_bodymass = starting_lean_bodymass
             current_user.current_lean_bodymass = round(current_user.current_weight - current_user.current_fat_pounds, 2)
             current_user.goal_lean_bodymass = goal_lean_bodymass
+
             try:
                 current_user.bmi = round((current_user.current_weight / current_user.height / current_user.height) * 703, 2)
             except ZeroDivisionError:
                 current_user.bmi = 0
+
             current_user.nonfat_lost = round((current_user.starting_lean_bodymass - current_user.current_lean_bodymass), 2)
             current_user.goal_fat_loss = round((current_user.current_fat_pounds - current_user.goal_fat_pounds), 2)
             current_user.goal_weight_auto = round((current_user.current_lean_bodymass / ((100 - current_user.goal_bf_percentage) * .01)), 2)
             current_user.goal_fat_loss_auto = round((current_user.current_weight - current_user.goal_weight_auto), 2)
             current_user.goal_muscle_gain = round(current_user.goal_weight - (current_user.current_weight - current_user.goal_fat_loss), 2)
-            post = Post(username=current_user.username, user_id=current_user.id, name=current_user.name, height=height,
+
+            post = Post(username=current_user.username, user_id=current_user.id,
+                        name=current_user.name, height=height,
                         starting_weight=starting_weight, current_weight=current_user.current_weight,
                         goal_weight=goal_weight, starting_bf_percentage=starting_bf_percentage,
-                        current_bf_percentage=current_user.current_bf_percentage, goal_bf_percentage=goal_bf_percentage,
-                        total_weight_lost=current_user.total_weight_lost, total_weight_gained=current_user.total_weight_gained,
+                        current_bf_percentage=current_user.current_bf_percentage,
+                        goal_bf_percentage=goal_bf_percentage,
+                        total_weight_lost=current_user.total_weight_lost,
+                        total_weight_gained=current_user.total_weight_gained,
                         starting_fat_pounds=current_user.starting_fat_pounds,
-                        current_fat_pounds=current_user.current_fat_pounds, goal_fat_pounds=current_user.goal_fat_pounds,
+                        current_fat_pounds=current_user.current_fat_pounds,
+                        goal_fat_pounds=current_user.goal_fat_pounds,
                         fat_lost=current_user.fat_lost, starting_lean_bodymass=starting_lean_bodymass,
                         current_lean_bodymass=current_user.current_lean_bodymass,
-                        goal_lean_bodymass=goal_lean_bodymass, bmi=current_user.bmi, nonfat_lost=current_user.nonfat_lost,
+                        goal_lean_bodymass=goal_lean_bodymass, bmi=current_user.bmi,
+                        nonfat_lost=current_user.nonfat_lost,
                         goal_fat_loss=goal_fat_loss, goal_weight_auto=current_user.goal_weight_auto,
-                        goal_fat_loss_auto=current_user.goal_fat_loss_auto, goal_muscle_gain= current_user.goal_muscle_gain)  #use current_user.username...for username/id, user form.current_weight.data to take info from the form to post to db
+                        goal_fat_loss_auto=current_user.goal_fat_loss_auto,
+                        goal_muscle_gain= current_user.goal_muscle_gain)  #use current_user.username...for username/id, user form.current_weight.data to take info from the form to post to db
+
             db.session.add(post)
             db.session.commit()
             return redirect(url_for('index'))
-        return render_template('index_user.html', title='Home', form=form, current_weight=current_weight,
+        return render_template('index_user.html', title='Home', form=form,
+                               current_weight=current_weight,
                                current_bf_percentage=current_bf_percentage,  name=name, height=height,
                                starting_weight=starting_weight, goal_weight=goal_weight,
-                               starting_bf_percentage=starting_bf_percentage, goal_bf_percentage=goal_bf_percentage,
+                               starting_bf_percentage=starting_bf_percentage,
+                               goal_bf_percentage=goal_bf_percentage,
                                fat_lost=fat_lost, starting_lean_bodymass=starting_lean_bodymass,
-                               current_lean_bodymass=current_lean_bodymass, goal_lean_bodymass=goal_lean_bodymass,
+                               current_lean_bodymass=current_lean_bodymass,
+                               goal_lean_bodymass=goal_lean_bodymass,
                                bmi=bmi, nonfat_lost=nonfat_lost, goal_fat_loss=goal_fat_loss,
-                               total_weight_lost=total_weight_lost, total_weight_gained=total_weight_gained,
+                               total_weight_lost=total_weight_lost,
+                               total_weight_gained=total_weight_gained,
                                current_fat_pounds=current_fat_pounds,
                                goal_fat_pounds=goal_fat_pounds, goal_weight_auto=goal_weight_auto,
                                goal_fat_loss_auto=goal_fat_loss_auto, goal_muscle_gain=goal_muscle_gain)
     return render_template('index.html', title='Home', form=form, name=name, height=height,
-                           starting_weight=starting_weight, current_weight=current_weight, goal_weight=goal_weight,
-                           starting_bf_percentage=starting_bf_percentage, current_bf_percentage=current_bf_percentage,
+                           starting_weight=starting_weight, current_weight=current_weight,
+                           goal_weight=goal_weight,
+                           starting_bf_percentage=starting_bf_percentage,
+                           current_bf_percentage=current_bf_percentage,
                            goal_bf_percentage=goal_bf_percentage, fat_lost=fat_lost,
-                           starting_lean_bodymass=starting_lean_bodymass, current_lean_bodymass=current_lean_bodymass,
+                           starting_lean_bodymass=starting_lean_bodymass,
+                           current_lean_bodymass=current_lean_bodymass,
                            goal_lean_bodymass=goal_lean_bodymass, bmi=bmi, nonfat_lost=nonfat_lost,
                            goal_fat_loss=goal_fat_loss, total_weight_lost=total_weight_lost,
                            total_weight_gained=total_weight_gained,
@@ -260,14 +272,15 @@ def edit_profile():
     name = form.name.data
     username = current_user.username
     user_id = current_user.id
+
     height_feet = form.height_feet.data
     height_inches = form.height_inches.data
     if height_feet is None:
         height_feet = 0
     if height_inches is None:
         height_inches = 0
+
     height = (height_feet * 12) + height_inches
-    #height = form.height.data
     starting_weight = form.starting_weight.data
     current_weight = form.current_weight.data
     goal_weight = form.goal_weight.data
@@ -289,6 +302,7 @@ def edit_profile():
         current_bf_percentage = current_user.current_bf_percentage
     if goal_bf_percentage is None:
         goal_bf_percentage = current_user.goal_bf_percentage
+
     total_weight_lost = starting_weight - current_weight  # these variable perfom calcs based on data entered into the html form
     starting_fat_pounds = round((starting_weight * starting_bf_percentage) * .01, 2)
     current_fat_pounds = round((current_weight * current_bf_percentage) * .01, 2)
@@ -297,15 +311,18 @@ def edit_profile():
     starting_lean_bodymass = round(starting_weight - starting_fat_pounds, 2)
     current_lean_bodymass = round(current_weight - current_fat_pounds, 2)
     goal_lean_bodymass = round(goal_weight - goal_fat_pounds, 2)
+
     try:
         bmi = round((current_weight / height / height) * 703, 2)
     except ZeroDivisionError:
         bmi = 0
+
     nonfat_lost = round((starting_lean_bodymass - current_lean_bodymass), 2)
     goal_fat_loss = round((current_fat_pounds - goal_fat_pounds), 2)
+
     if form.validate_on_submit():
         current_user.username = username
-        current_user.id = user_id  # these need to be here to update the "user database", thats wwhat 'current_user.' does, without 'current_user.' is will only update the Post db
+        current_user.id = user_id  # these need to be here to update the "user database", without 'current_user.' is will only update the Post db
         current_user.name = name
         current_user.height = height
         current_user.starting_weight = starting_weight
@@ -325,24 +342,131 @@ def edit_profile():
         current_user.bmi = bmi
         current_user.nonfat_lost = nonfat_lost
         current_user.goal_fat_loss = goal_fat_loss
-        post = Post(username=current_user.username, user_id=current_user.id, name=current_user.name, height=height,
-                    starting_weight=starting_weight, current_weight=current_weight, goal_weight=goal_weight,
-                    starting_bf_percentage=starting_bf_percentage, current_bf_percentage=current_bf_percentage,
+        current_user.goal_weight_auto = round((current_user.current_lean_bodymass / ((100 - current_user.goal_bf_percentage) * .01)), 2)
+        current_user.goal_fat_loss_auto = round((current_user.current_weight - current_user.goal_weight_auto), 2)
+        current_user.goal_muscle_gain = round(current_user.goal_weight - (current_user.current_weight - current_user.goal_fat_loss), 2)
+
+        post = Post(username=current_user.username,
+                    user_id=current_user.id, name=current_user.name, height=height,
+                    starting_weight=starting_weight, current_weight=current_weight,
+                    goal_weight=goal_weight,
+                    starting_bf_percentage=starting_bf_percentage,
+                    current_bf_percentage=current_bf_percentage,
                     goal_bf_percentage=goal_bf_percentage, total_weight_lost=total_weight_lost,
                     starting_fat_pounds=starting_fat_pounds, current_fat_pounds=current_fat_pounds,
-                    goal_fat_pounds=goal_fat_pounds, fat_lost=fat_lost, starting_lean_bodymass=starting_lean_bodymass,
-                    current_lean_bodymass=current_lean_bodymass, goal_lean_bodymass=goal_lean_bodymass, bmi=bmi,
+                    goal_fat_pounds=goal_fat_pounds, fat_lost=fat_lost,
+                    starting_lean_bodymass=starting_lean_bodymass,
+                    current_lean_bodymass=current_lean_bodymass,
+                    goal_lean_bodymass=goal_lean_bodymass, bmi=bmi,
                     nonfat_lost=nonfat_lost,
                     goal_fat_loss=goal_fat_loss)  # use current_user.username...for username/id, user form.current_weight.data to take info from the form to post to db
+
         db.session.add(post)
         db.session.commit()
         flash('Your changes have been saved.')
         return redirect(url_for('index'))
-   # elif request.method == 'GET':
-        #form.username.data = current_user.username #dont need these, might put something else in
-        #form.about_me.data = current_user.about_me
     return render_template('edit_profile.html', title='Edit Profile',
                            form=form)
+
+@app.route('/math', methods=['GET'])
+def math():
+    if current_user.is_authenticated:
+        return render_template('math.html', title='Math', username=current_user.username,
+                        user_id=current_user.id,
+                        name=current_user.name,
+                        height=current_user.height,
+                        starting_weight=current_user.starting_weight,
+                        current_weight=current_user.current_weight,
+                        goal_weight=current_user.goal_weight,
+                        starting_bf_percentage=current_user.starting_bf_percentage * .01,
+                        current_bf_percentage=current_user.current_bf_percentage * .01,
+                        goal_bf_percentage=current_user.goal_bf_percentage * .01,
+                        total_weight_lost=current_user.total_weight_lost,
+                        total_weight_gained=current_user.total_weight_gained,
+                        starting_fat_pounds=current_user.starting_fat_pounds,
+                        current_fat_pounds=current_user.current_fat_pounds,
+                        goal_fat_pounds=current_user.goal_fat_pounds,
+                        fat_lost=current_user.fat_lost,
+                        starting_lean_bodymass=current_user.starting_lean_bodymass,
+                        current_lean_bodymass=current_user.current_lean_bodymass,
+                        goal_lean_bodymass=current_user.goal_lean_bodymass,
+                        bmi=current_user.bmi,
+                        nonfat_lost=current_user.nonfat_lost,
+                        goal_fat_loss=current_user.goal_fat_loss,
+                        goal_weight_auto=current_user.goal_weight_auto,
+                        goal_fat_loss_auto=current_user.goal_fat_loss_auto,
+                        goal_muscle_gain= current_user.goal_muscle_gain)
+    else:
+        name = session['form_data'].get('name')
+        height = session['form_data'].get('height')
+        starting_weight = session['form_data'].get('starting_weight')
+        current_weight = session['form_data'].get('current_weight')
+        goal_weight = session['form_data'].get('goal_weight')
+        starting_bf_percentage = session['form_data'].get('starting_bf_percentage')
+        current_bf_percentage = session['form_data'].get('current_bf_percentage')
+        goal_bf_percentage = session['form_data'].get('goal_bf_percentage')
+
+        if height is None:
+            height = 0
+        if starting_weight is None:
+            starting_weight = 0
+        if current_weight is None:
+            current_weight = 0
+        if goal_weight is None:
+            goal_weight = 0
+        if starting_bf_percentage is None:
+            starting_bf_percentage = 0
+        if current_bf_percentage is None:
+            current_bf_percentage = 0
+        if goal_bf_percentage is None:
+            goal_bf_percentage = 0
+
+        total_weight_lost = starting_weight - current_weight
+        if total_weight_lost < 0:
+            total_weight_lost = 0
+        total_weight_gained = current_weight - starting_weight
+        if total_weight_gained < 0:
+            total_weight_gained = 0
+
+        starting_fat_pounds = round((starting_weight * starting_bf_percentage) * .01, 2)
+        current_fat_pounds = round((current_weight * current_bf_percentage) * .01, 2)
+        goal_fat_pounds = round((goal_weight * goal_bf_percentage) * .01, 2)
+        fat_lost = round((starting_fat_pounds - current_fat_pounds), 2)
+        starting_lean_bodymass = round(starting_weight - starting_fat_pounds, 2)
+        current_lean_bodymass = round(current_weight - current_fat_pounds, 2)
+        goal_lean_bodymass = round(goal_weight - goal_fat_pounds, 2)
+
+        try:
+            bmi = round((current_weight / height / height) * 703, 2)
+        except ZeroDivisionError:
+            bmi = 0
+
+        nonfat_lost = round((starting_lean_bodymass - current_lean_bodymass), 2)
+        goal_fat_loss = round((current_fat_pounds - goal_fat_pounds), 2)
+        goal_weight_auto = round((current_lean_bodymass / ((100 - goal_bf_percentage) * .01)), 2)
+        goal_fat_loss_auto = round((current_weight - goal_weight_auto), 2)
+        goal_muscle_gain = round(goal_weight - (current_weight - goal_fat_loss), 2)
+        return render_template('math.html', title='Math',
+                               current_weight=current_weight,
+                               current_bf_percentage=current_bf_percentage, name=name, height=height,
+                               starting_weight=starting_weight, goal_weight=goal_weight,
+                               starting_bf_percentage=starting_bf_percentage,
+                               goal_bf_percentage=goal_bf_percentage,
+                               fat_lost=fat_lost, starting_lean_bodymass=starting_lean_bodymass,
+                               current_lean_bodymass=current_lean_bodymass,
+                               goal_lean_bodymass=goal_lean_bodymass,
+                               bmi=bmi, nonfat_lost=nonfat_lost, goal_fat_loss=goal_fat_loss,
+                               total_weight_lost=total_weight_lost,
+                               total_weight_gained=total_weight_gained,
+                               starting_fat_pounds=starting_fat_pounds,
+                               current_fat_pounds=current_fat_pounds,
+                               goal_fat_pounds=goal_fat_pounds, goal_weight_auto=goal_weight_auto,
+                               goal_fat_loss_auto=goal_fat_loss_auto, goal_muscle_gain=goal_muscle_gain
+                               )
+
+@app.route('/about', methods=['GET'])
+def about():
+    return render_template('about.html', title='About')
 
 @app.route('/reset_password_request', methods=['GET', 'POST'])
 def reset_password_request():

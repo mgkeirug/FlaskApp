@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block app_content %}
+
+<h1>The math</h1>
+<h3>Fat Pounds</h3>
+Your total starting fat pounds is your (<i>starting weight</i>) X (<i>starting bodyfat percentage</i>) :<br>
+{{ starting_weight }} X {{ starting_bf_percentage }} = {{ starting_fat_pounds }}<br>
+
+Your total current fat pounds is your (<i>current weight</i>) X (<i>current bodyfat percentage</i>) :<br>
+{{ current_weight }} X {{ current_bf_percentage }} = {{ current_fat_pounds }}<br>
+
+<b>Therefore</b> you have lost {{ fat_lost }} pounds of fat!<br>
+
+
+<h3>Lean Body Mass</h3>
+Your starting lean body mass is your (<i>starting weight</i>) - (<i>starting fat pounds</i>):<br>
+{{ starting_weight }} - {{ starting_fat_pounds }} = {{ starting_lean_bodymass}}<br>
+
+Your current lean body mass is your (<i>current weight</i>) - (<i>current fat pounds</i>):<br>
+{{ current_weight }} - {{ current_fat_pounds }} = {{ current_lean_bodymass}}<br>
+
+<b>Therefore</b> you have lost {{ nonfat_lost }} pounds of non-fat mass.<br>
+
+<h3>Goals</h3>
+If your goal is to weigh {{ goal_weight }} pounds at {{ goal_bf_percentage }} % bodyfat.<br>
+Then your goal is to have {{ goal_fat_pounds }} pounds of fat on you and your goal lean body mass is {{ goal_lean_bodymass }}<br>
+
+<b>Therefore</b> you must lose {{ goal_fat_loss }} pounds of fat and you must gain {{ goal_muscle_gain }} pounds of muscle to reach your goal!<br>
+<br>
+
+If your goal bodyfat percentage is {{ goal_bf_percentage }} % and you're unsure about your goal weight,<br>
+Then we calculate your goal weight by taking your (<i>current lean body mass</i>) / [1 -(<i>goal bodyfat percentage</i>)]:<br>
+{{ current_lean_bodymass}} / (1 - {{ goal_bf_percentage }}) = {{ goal_weight_auto }}<br>
+<b>Therefore</b> your goal weight is {{ goal_weight_auto }} pounds and you must lose {{ goal_fat_loss_auto }} pounds of fat!<br>
+*This is assuming your lean body mass stays the same.<br>
+{% endblock %}
